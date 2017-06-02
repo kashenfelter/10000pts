@@ -6,7 +6,9 @@ library(cccd)
 library(deldir)
 library(ggart)
 library(pts10000)
+library(SyNet)
 library(tidyverse)
+library(TSP)
 
 # Make reproducible
 set.seed(10000)
@@ -56,6 +58,14 @@ result <- read.table("pts10000/data/lin-kernighan-union.cyc") %>%
 p5 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, size = 1, lineend = "round")
 ggsave("plots/005-tsp.png", p5, width = 20, height = 20, units = "in")
 
+# TSP (exact)
+# etsp <- ETSP(points)
+# tour <- solve_TSP(etsp)
+# tour
+# tour_length(tour)
+# plot(etsp, tour)
+# etsp
+
 # k-means ----
 temp <- kmeans(points, 1000)
 centers <- as.data.frame(temp[["centers"]]) %>% mutate(centreID = 1:nrow(.))
@@ -66,19 +76,26 @@ result <- points %>% cbind(temp2) %>% left_join(centers, by = "centreID") %>%
 p6 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
 ggsave("plots/006-kmeans.png", p6, width = 20, height = 20, units = "in")
 
-# # Minimum spanning tree
-# require(stats)
-# X <- matrix(runif(200), 20, 10)
-# d <- dist(X)
-# PC <- prcomp(X)
-# M <- mst(d)
-# opar <- par()
-# par(mfcol = c(2, 2))
-# plot(M)
-# plot(M, graph = "nsca")
-# plot(M, x1 = PC$x[, 1], x2 = PC$x[, 2])
-# par(opar)
-# 
+# Minimum spanning tree ----
+result <- read_delim("pts10000/data/mst.qs", delim = " ", col_names = FALSE, skip = 10001) %>%
+  rename(p1 = X1, p2 = X2) %>%
+  select(p1, p2) %>%
+  left_join(points %>% mutate(id = seq(0, nrow(.) - 1)), by = c("p1" = "id")) %>%
+  left_join(points %>% mutate(id = seq(0, nrow(.) - 1)) %>% rename(xend = x, yend = y), by = c("p2" = "id")) %>%
+  select(x, y, xend, yend)
+p7 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
+ggsave("plots/007-mst.png", p7, width = 20, height = 20, units = "in")
+
+ # Quadrand nearest neighbour ----
+result <- read_delim("pts10000/data/qnn.qs", delim = " ", col_names = FALSE, skip = 10001) %>%
+  rename(p1 = X1, p2 = X2) %>%
+  select(p1, p2) %>%
+  left_join(points %>% mutate(id = seq(0, nrow(.) - 1)), by = c("p1" = "id")) %>%
+  left_join(points %>% mutate(id = seq(0, nrow(.) - 1)) %>% rename(xend = x, yend = y), by = c("p2" = "id")) %>%
+  select(x, y, xend, yend)
+p8 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
+ggsave("plots/008-qnn.png", p8, width = 20, height = 20, units = "in")
+
 # # Relative neighbourhood graph ----
 # result <- data.frame(x = numeric(0), y = numeric(0), xend = numeric(0), yend = numeric(0))
 # for(i in seq(1, nrow(points) - 1)) {
@@ -104,3 +121,10 @@ ggsave("plots/006-kmeans.png", p6, width = 20, height = 20, units = "in")
 # x <- matrix(runif(100),ncol=2)
 # g <- rng(test)
 # 
+
+# Gilbert model ----
+# Connect two points if the distance is less than a threshold
+# result <- data.frame(x = rep(points$x, times = 10000))
+# 
+# p7 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
+# ggsave("plots/007-gilbert.png", p7, width = 20, height = 20, units = "in")
