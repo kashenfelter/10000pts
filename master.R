@@ -3,7 +3,9 @@
 # Packages ----
 library(ape)
 library(cccd)
+library(clue)
 library(deldir)
+library(ggalt)
 library(ggart)
 library(pts10000)
 library(SyNet)
@@ -96,6 +98,24 @@ result <- read_delim("pts10000/data/qnn.qs", delim = " ", col_names = FALSE, ski
 p8 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
 ggsave("plots/008-qnn.png", p8, width = 20, height = 20, units = "in")
 
+# Density contour plot ----
+p9 <- p +
+  geom_point(aes(x, y), points, colour = "gray") +
+  geom_bkde2d(aes(x, y), points, colour = "black", size = 0.5, bandwidth = c(5, 5), lineend = "round", contour = FALSE)
+
+ggsave("plots/009-density.png", p9, width = 20, height = 20, units = "in")
+
+# k-d tree
+result <- kdtree(points)
+p10 <- ggplot() +
+  #geom_point(aes(x, y), points, size = 1, alpha = 0.25) +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_segment(aes(x, y, xend = xend, yend = yend), result)
+ggsave("plots/010-kdtree.png", p10, width = 20, height = 20, units = "in")
+
 # # Relative neighbourhood graph ----
 # result <- data.frame(x = numeric(0), y = numeric(0), xend = numeric(0), yend = numeric(0))
 # for(i in seq(1, nrow(points) - 1)) {
@@ -128,3 +148,10 @@ ggsave("plots/008-qnn.png", p8, width = 20, height = 20, units = "in")
 # 
 # p7 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
 # ggsave("plots/007-gilbert.png", p7, width = 20, height = 20, units = "in")
+
+# Bipartite matching
+x <- matrix(c(5, 1, 4, 3, 5, 2, 2, 4, 4), nrow = 3)
+test <- solve_LSAP(x)
+str(test)
+test
+test[4]
