@@ -98,11 +98,13 @@ result <- read_delim("pts10000/data/qnn.qs", delim = " ", col_names = FALSE, ski
 p8 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
 ggsave("plots/008-qnn.png", p8, width = 20, height = 20, units = "in")
 
-# Density contour plot ----
-p9 <- p +
-  geom_point(aes(x, y), points, colour = "gray") +
-  geom_bkde2d(aes(x, y), points, colour = "black", size = 0.5, bandwidth = c(5, 5), lineend = "round", contour = FALSE)
-
+# 2D kernel density estimation ----
+p9 <- ggplot() +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0) +
+  stat_density_2d(aes(x, y), points, n = 350, h = c(105, 105), colour = "black")
 ggsave("plots/009-density.png", p9, width = 20, height = 20, units = "in")
 
 # k-d tree
@@ -155,3 +157,49 @@ test <- solve_LSAP(x)
 str(test)
 test
 test[4]
+
+# Graham's scan ----
+
+# Function for determining if v2 makes a right turn w.r.t. v1
+right_turn <- function(v1, v2){
+  angle <- atan2(v2[2], v2[1]) - atan2(v1[2], v1[1])
+  if(angle < 0) {
+    TRUE
+  } else {
+    FALSE
+  }
+}
+
+n <- nrow(points)
+sorted <- points %>% arrange(x)
+i <- 1
+j <- 2
+k <- 3
+l <- 1 # index into df
+df <- data.frame(x = numeric(n*10), y = numeric(n*10), xend = numeric(n*10), yend = numeric(n*10),
+                 id1 = integer(n*10), id2 = integer(n*10), hull = logical(n*10))
+df[1, ] <- c(sorted$x[1], sorted$y[1], sorted$x[2], sorted$y[2], 1, 2, TRUE)
+r <- 2
+while(k <= 100) {
+  v1 <- c(sorted$x[j] - sorted$x[i], sorted$y[j] - sorted$y[i])
+  v2 <- c(sorted$x[k] - sorted$x[j], sorted$y[k] - sorted$y[j])
+  if(right_turn(v1, v2) | !df$hull[l]) {
+    df[r, ] <- c(sorted$x[i], sorted$y[i], sorted$x[j], sorted$y[j], i, j, TRUE)
+    r <- r + 1
+    i <- i + 1
+    j <- j + 1
+    k <- k + 1
+    l <- r - 1
+  } else {
+    df$hull[l] <- FALSE
+    l <- l - 1
+    i <- df$id1[l]
+    j <- df$id2[l]
+  }
+  print(paste(i, j, k), sep = ", ")
+}
+
+df <- df %>% filter(id1 != 0)
+
+p11 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df, lineend = "round", alpha = 0.1)
+ggsave("plots/011-graham.png", p11, width = 20, height = 20, units = "in")
