@@ -5,8 +5,10 @@ library(ape)
 library(cccd)
 library(clue)
 library(deldir)
+library(ggforce)
 library(ggalt)
 library(ggart)
+library(packcircles)
 library(pts10000)
 library(SyNet)
 library(tidyverse)
@@ -203,3 +205,33 @@ df <- df %>% filter(id1 != 0)
 
 p11 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df, lineend = "round", alpha = 0.1)
 ggsave("plots/011-graham.png", p11, width = 20, height = 20, units = "in")
+
+# Circles ----
+df <- points %>% mutate(r = 10)
+for(i in 1:10000) {
+  xi <- points$x[i]
+  yi <- points$y[i]
+  temp <- df %>% mutate(dist = sqrt((x - xi)^2 + (y - yi)^2) - r) %>% arrange(dist)
+  df$r[i] <- temp$dist[2]
+  print(i)
+}
+
+p12 <- ggplot() +
+  coord_equal() +
+  coord_cartesian(xlim = c(0, 10000), ylim = c(0, 10000)) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_circle(aes(x0 = x, y0 = y, r = r), df, n = 720, size = 0.6)
+ggsave("plots/012-circles.png", p12, width = 20, height = 20, units = "in", dpi = 720)
+
+# Pack circles ----
+r <- 50
+df <- points %>% mutate(size = r)
+test <- circleRepelLayout(df, xlim = 10000, ylim = 10000, sizetype = "radius")
+df2 <- test$layout
+
+p13 <- ggplot() +
+  coord_equal() +
+  coord_cartesian(xlim = c(0, 10000), ylim = c(0, 10000)) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_circle(aes(x0 = x, y0 = y, r = radius), df2, n = 720, size = 0.6)
+ggsave("plots/013-packcircles.png", p13, width = 20, height = 20, units = "in", dpi = 720)
