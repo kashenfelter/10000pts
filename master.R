@@ -10,6 +10,7 @@ library(ggalt)
 library(ggart)
 library(packcircles)
 library(pts10000)
+library(reshape2)
 library(SyNet)
 library(tidyverse)
 library(TSP)
@@ -235,3 +236,13 @@ p13 <- ggplot() +
   theme_blankcanvas(margin_cm = 0) +
   geom_circle(aes(x0 = x, y0 = y, r = radius), df2, n = 720, size = 0.6)
 ggsave("plots/013-packcircles.png", p13, width = 20, height = 20, units = "in", dpi = 720)
+
+# Gilbert model ----
+points_id <- points %>% mutate(id = 1:nrow(.))
+df <- melt(as.matrix(dist(points)), varnames = c("v1", "v2"))
+dmax <- 0.015 * 10000
+df2 <- df %>% filter(value > 0, value < dmax) %>%
+  left_join(points_id, by = c("v2" = "id")) %>% rename(xend = x, yend = y) %>%
+  left_join(points_id, by = c("v1" = "id"))
+p14 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df2, lineend = "round")
+ggsave("plots/014-gilbert-0015.png", p14, width = 20, height = 20, units = "in")
