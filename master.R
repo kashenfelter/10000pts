@@ -246,3 +246,14 @@ df2 <- df %>% filter(value > 0, value < dmax) %>%
   left_join(points_id, by = c("v1" = "id"))
 p14 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df2, lineend = "round")
 ggsave("plots/014-gilbert-0015.png", p14, width = 20, height = 20, units = "in")
+
+# Vector field
+l <- 100
+df <- points %>% mutate(vx = ((2*y - x) / sqrt(x^2+y^2)), vy = sin((0.5*(x)/ sqrt(x^2+y^2))),
+                        r = sqrt(vx^2 + vy^2), xend = x + vx / r * l, yend = y + vy / r * l)
+p15 <- ggplot() +
+  coord_equal() +
+  coord_cartesian(xlim = c(0, 10000), ylim = c(0, 10000)) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_segment(aes(x, y, xend = xend, yend = yend), df, lineend = "round", arrow = arrow(length = unit(0.2, "cm")), size = 0.35)
+ggsave("plots/015-vectorfield.png", p15, width = 20, height = 20, units = "in")
