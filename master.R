@@ -257,3 +257,27 @@ p15 <- ggplot() +
   theme_blankcanvas(margin_cm = 0) +
   geom_segment(aes(x, y, xend = xend, yend = yend), df, lineend = "round", arrow = arrow(length = unit(0.2, "cm")), size = 0.35)
 ggsave("plots/015-vectorfield.png", p15, width = 20, height = 20, units = "in")
+
+# Squares
+n <- nrow(points)
+min_width <- 25
+min_height <- 25
+max_width <- 150
+max_height <- 150
+df <- points %>%
+  mutate(id = 1:n, width = runif(n, min_width, max_width), height = runif(n, min_height, max_height),
+         x1 = x - width / 2, y1 = y - height / 2,
+         x2 = x - width / 2, y2 = y + height / 2,
+         x3 = x + width / 2, y3 = y + height / 2,
+         x4 = x + width / 2, y4 = y - height / 2)
+df2 <- (df %>% select(id, x1, y1) %>% rename(x = x1, y = y1)) %>%
+  rbind(df %>% select(id, x2, y2) %>% rename(x = x2, y = y2)) %>%
+  rbind(df %>% select(id, x3, y3) %>% rename(x = x3, y = y3)) %>%
+  rbind(df %>% select(id, x4, y4) %>% rename(x = x4, y = y4))
+
+p16 <- ggplot() +
+  coord_equal() +
+  coord_cartesian(xlim = c(0, 10000), ylim = c(0, 10000)) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_polygon(aes(x, y, group = id), df2, colour = "black", fill = "black", alpha = 0.15)
+ggsave("plots/016-squares.png", p16, width = 20, height = 20, units = "in")
