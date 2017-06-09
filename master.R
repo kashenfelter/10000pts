@@ -5,12 +5,14 @@ library(ape)
 library(cccd)
 library(clue)
 library(deldir)
+library(gganimate)
 library(ggforce)
 library(ggalt)
 library(ggart)
 library(packcircles)
 library(pts10000)
 library(reshape2)
+library(sp)
 library(SyNet)
 library(tidyverse)
 library(TSP)
@@ -247,7 +249,7 @@ df2 <- df %>% filter(value > 0, value < dmax) %>%
 p14 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df2, lineend = "round")
 ggsave("plots/014-gilbert-0015.png", p14, width = 20, height = 20, units = "in")
 
-# Vector field
+# Vector field ----
 l <- 100
 df <- points %>% mutate(vx = ((2*y - x) / sqrt(x^2+y^2)), vy = sin((0.5*(x)/ sqrt(x^2+y^2))),
                         r = sqrt(vx^2 + vy^2), xend = x + vx / r * l, yend = y + vy / r * l)
@@ -258,7 +260,7 @@ p15 <- ggplot() +
   geom_segment(aes(x, y, xend = xend, yend = yend), df, lineend = "round", arrow = arrow(length = unit(0.2, "cm")), size = 0.35)
 ggsave("plots/015-vectorfield.png", p15, width = 20, height = 20, units = "in")
 
-# Squares
+# Squares ----
 n <- nrow(points)
 min_width <- 25
 min_height <- 25
@@ -281,3 +283,61 @@ p16 <- ggplot() +
   theme_blankcanvas(margin_cm = 0) +
   geom_polygon(aes(x, y, group = id), df2, colour = "black", fill = "black", alpha = 0.15)
 ggsave("plots/016-squares.png", p16, width = 20, height = 20, units = "in")
+
+# Minimal directed spanning tree
+# Reference: http://www.maths.dur.ac.uk/users/andrew.wade/research/graphs.html#mdst
+find_nearest <- function(points, id) {
+  xi <- points$x[id]
+  yi <- points$y[id]
+  temp <- points %>% mutate(dist = sqrt((x - xi)^2 + (y - yi)^2)) %>% filter(x < xi, y < yi) %>% arrange(dist)
+  result <- temp[1, ] %>% mutate(xend = xi, yend = yi)
+}
+
+result <- 1:10000 %>%
+  map_df(~find_nearest(points, .), .id = "id")
+p17 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), result, lineend = "round")
+ggsave("plots/017-directspan.png", p17, width = 20, height = 20, units = "in")
+
+# On-line nearest-neighbour graph ----
+# Reference: http://www.maths.dur.ac.uk/users/andrew.wade/research/graphs.html#mdst
+df <- points %>% mutate(xend = NA, yend = NA, id = 1:nrow(.))
+
+for(i in 2:nrow(points)) {
+  xi <- points$x[i]
+  yi <- points$y[i]
+  temp <- df %>%
+    filter(id < i) %>%
+    mutate(dist = sqrt((xi - x)^2 + (yi - y)^2)) %>%
+    arrange(dist)
+  df[i, c("xend", "yend")] <- c(temp$x[1], temp$y[1])
+  print(i)
+}
+
+p18 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df, lineend = "round")
+ggsave("plots/18-online.png", p18, width = 20, height = 20, units = "in")
+
+# Quadtree ----
+df <- quadtree(points)
+test <- df %>% group_by(id) %>% summarise(xmin = min(x), xmax = max(x)) %>% mutate(delta = xmax - xmin)
+test2 <- df %>% left_join(test %>% select(id, delta), by = "id") %>% filter(delta > 10)
+p19 <- ggplot() +
+  #geom_point(aes(x, y), points, size = 1, alpha = 0.25) +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_polygon(aes(x, y, group = id), test2, colour = "black", fill = "transparent", size = 0.5)
+ggsave("plots/019a-quadtree.png", p19, width = 20, height = 20, units = "in")
+
+df2 <- test2 %>% mutate(frame = ceiling(id / (nrow(.) / 2000)))
+
+p19 <- ggplot() +
+  #geom_point(aes(x, y), points, size = 1, alpha = 0.25) +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_polygon(aes(x, y, group = id, frame = frame, cumulative = TRUE), df2, colour = "black", fill = "transparent", size = 0.4)
+
+animation::ani.options(interval = 1/15/4)
+gganimate(p19, "gifs/019-quadtree.gif", title_frame = FALSE, ani.width = 740, ani.height = 740)
