@@ -341,3 +341,19 @@ p19 <- ggplot() +
 
 animation::ani.options(interval = 1/15/4)
 gganimate(p19, "gifs/019-quadtree.gif", title_frame = FALSE, ani.width = 740, ani.height = 740)
+
+# Weiszfeld ----
+set.seed(10000)
+terminals <- data.frame(x = runif(10, 0, 10000), y = runif(10, 0, 10000))
+df <- 1:10000 %>%
+  map_df(~weiszfeld(terminals, c(points$x[.], points$y[.])), .id = "id")
+
+p20 <- ggplot() +
+  geom_point(aes(x, y), points, size = 1, alpha = 0.25) +
+  geom_point(aes(x, y), terminals, size = 5, alpha = 1) +
+  geom_line(aes(x, y, group = id), df, colour = "black", size = 0.5, alpha = 0.03) +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0)
+ggsave("plots/020-weiszfeld.png", p20, width = 20, height = 20, units = "in")
