@@ -306,7 +306,7 @@ for(i in 2:nrow(points)) {
   xi <- points$x[i]
   yi <- points$y[i]
   temp <- df %>%
-    filter(id < i) %>%
+    filter(i < id) %>%
     mutate(dist = sqrt((xi - x)^2 + (yi - y)^2)) %>%
     arrange(dist)
   df[i, c("xend", "yend")] <- c(temp$x[1], temp$y[1])
@@ -314,7 +314,7 @@ for(i in 2:nrow(points)) {
 }
 
 p18 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df, lineend = "round")
-ggsave("plots/18-online.png", p18, width = 20, height = 20, units = "in")
+ggsave("plots/018-online.png", p18, width = 20, height = 20, units = "in")
 
 # Quadtree ----
 df <- quadtree(points)
@@ -357,3 +357,50 @@ p20 <- ggplot() +
   ylim(0, 10000) +
   theme_blankcanvas(margin_cm = 0)
 ggsave("plots/020-weiszfeld.png", p20, width = 20, height = 20, units = "in")
+
+# k-d tree (remix) ----
+result <- kdtree(points[1:499, ], minmax = TRUE)
+p21 <- ggplot() +
+  #geom_point(aes(x, y), points, size = 1, alpha = 0.25) +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0) +
+  geom_segment(aes(x, y, xend = xend, yend = yend), result)
+ggsave("plots/021-kdtree.png", p21, width = 20, height = 20, units = "in")
+
+# Hexagonal heatmap of 2d bin counts ----
+p22 <- ggplot() +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0) +
+  stat_bin_hex(aes(x, y), points, bins = 75, colour = "white") +
+  #geom_point(aes(x, y), points, size = 1, alpha = 0.25) +
+  scale_fill_gradient(low = "black", high = "black")
+ggsave("plots/022-hexbin.png", p22, width = 20, height = 20, units = "in")
+
+# Hexagonal heatmap of 2d bin counts ----
+points2 <- points %>% mutate(id = 1:nrow(.), used = FALSE)
+df <- data.frame(x = numeric(10000), y = numeric(10000), xend = numeric(10000), yend = numeric(10000))
+df[1, c("x", "y")] <- points[1, ]
+
+for(i in 1:9999) {
+  xi <- points2$x[i]
+  yi <- points2$y[i]
+  temp <- points2 %>%
+    filter(!used) %>%
+    mutate(dist = sqrt((x - xi)^2 + (y - yi)^2)) %>%
+    filter(dist < 250)
+  if(nrow(temp) == 0) next
+  chosen <- sample_n(temp, 1)
+  df[i, ] <- c(xi, yi, chosen$x[1], chosen$y[1])
+  points2[points2$id == chosen$id[1], "used"] <- TRUE
+  print(i)
+}
+
+df <- df %>% filter(x > 0)
+
+p23 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df)
+
+ggsave("plots/023-randwalk-4.png", p23, width = 20, height = 20, units = "in")
