@@ -13,6 +13,7 @@ library(packcircles)
 library(pts10000)
 library(reshape2)
 library(sp)
+library(steiner)
 library(SyNet)
 library(tidyverse)
 library(TSP)
@@ -28,6 +29,14 @@ p <- ggplot() +
   xlim(0, 10000) +
   ylim(0, 10000) +
   theme_blankcanvas(margin_cm = 0)
+
+p0 <- ggplot() +
+  #geom_point(aes(x, y), points, size = 1) +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_blankcanvas(margin_cm = 0)
+
 ggsave("plots/001-points.png", p, width = 20, height = 20, units = "in")
 
 # Delaunay ----
@@ -404,3 +413,29 @@ df <- df %>% filter(x > 0)
 p23 <- p + geom_segment(aes(x, y, xend = xend, yend = yend), df)
 
 ggsave("plots/023-randwalk-4.png", p23, width = 20, height = 20, units = "in")
+
+# Convex hulls ----
+nhulls <- 1000
+points2 <- points %>% mutate(id = 1:nrow(.))
+span <- 500
+df <- data.frame(x = numeric(0), y = numeric(0), xend = numeric(0), yend = numeric(0))
+
+for(i in 1:nhulls) {
+  pt <- sample_n(points2, 1)
+  pt_id <- pt$id[1]
+  pt_x <- pt$x[1]
+  pt_y <- pt$y[1]
+  temp <- points %>%
+    mutate(dist = sqrt((pt_x - x)^2 + (pt_y - y)^2)) %>%
+    filter(dist < span) %>%
+    sample_n(min(10, nrow(.))) %>%
+    select(x, y) %>%
+    chull_edges() %>%
+    mutate(id = i)
+  df <- df %>% rbind(temp)
+  print(i)
+}
+
+#p24 <- p0 + geom_segment(aes(x, y, xend = xend, yend = yend), df, alpha = 1)
+p24 <- p0 + geom_polygon(aes(x, y, group = id), df, alpha = 0.1, colour = "black")
+ggsave("plots/024-convexhulls.png", p24, width = 20, height = 20, units = "in")
