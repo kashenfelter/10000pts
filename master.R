@@ -439,3 +439,27 @@ for(i in 1:nhulls) {
 #p24 <- p0 + geom_segment(aes(x, y, xend = xend, yend = yend), df, alpha = 1)
 p24 <- p0 + geom_polygon(aes(x, y, group = id), df, alpha = 0.1, colour = "black")
 ggsave("plots/024-convexhulls.png", p24, width = 20, height = 20, units = "in")
+
+# Complete graph ----
+set.seed(10000)
+directions <- runif(8, 0, pi)
+n <- 2000
+span <- 500
+df <- data.frame(x = numeric(0), y = numeric(0), id = integer(0))
+for(i in 1:n) {
+  pt <- sample_n(points, 1)
+  pt_id <- pt$id[1]
+  pt_x <- pt$x[1]
+  pt_y <- pt$y[1]
+  temp <- points %>%
+    mutate(dist = sqrt((pt_x - x)^2 + (pt_y - y)^2)) %>%
+    filter(dist < span) %>%
+    sample_n(1)
+  p1 <- round(c(pt$x[1], pt$y[1]), 0)
+  p2 <- round(c(temp$x[1], temp$y[1]), 0)
+  temp2 <- compute_edge_parallelogram(p1, p2, directions) %>% mutate(id = as.integer(id)) %>% mutate(id2 = i)
+  df <- df %>% rbind(temp2)
+}
+
+p25 <- p0 + geom_polygon(aes(x, y, group = id2), df, color = "black", fill = "black", alpha = 0.1)
+ggsave("plots/025-edgeparallel.png", p25, width = 20, height = 20, units = "in")
