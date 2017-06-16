@@ -477,6 +477,6 @@ for(i in 1:max(result$centreID)) {
   temp <- chull_edges(result %>% filter(centreID == i) %>% select(x, y)) %>% mutate(group = i)
   edges <- edges %>% rbind(temp)
 }
-p26 <- p0 + geom_polygon(aes(x, y, group = group, fill = group), edges)+ scale_fill_gradient(low = "white", high = "black")
+p26 <- p0 + geom_polygon(aes(x, y, group = group, fill = group), edges, colour = "black")+ scale_fill_gradient(low = "white", high = "black")
   geom_segment(aes(x, y, xend = xend, yend = yend), edges, lineend = "round")
 ggsave("plots/026-kmeans-regions.png", p26, width = 20, height = 20, units = "in")
