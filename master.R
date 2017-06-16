@@ -17,6 +17,7 @@ library(steiner)
 library(SyNet)
 library(tidyverse)
 library(TSP)
+library(viridis)
 
 # Make reproducible
 set.seed(10000)
@@ -463,3 +464,19 @@ for(i in 1:n) {
 
 p25 <- p0 + geom_polygon(aes(x, y, group = id2), df, color = "black", fill = "black", alpha = 0.1)
 ggsave("plots/025-edgeparallel.png", p25, width = 20, height = 20, units = "in")
+
+# k-means-regions ----
+temp <- kmeans(points, 1000)
+centers <- as.data.frame(temp[["centers"]]) %>% mutate(centreID = 1:nrow(.))
+temp2 <- as.data.frame(temp[["cluster"]])
+names(temp2) <- c("centreID")
+result <- points %>% cbind(temp2) %>% left_join(centers, by = "centreID") %>%
+  rename(x = x.x, y = y.x, xend = x.y, yend = y.y)
+edges <- data.frame(x = numeric(0), y = numeric(0), xend = numeric(0), yend = numeric(0), group = integer(0))
+for(i in 1:max(result$centreID)) {
+  temp <- chull_edges(result %>% filter(centreID == i) %>% select(x, y)) %>% mutate(group = i)
+  edges <- edges %>% rbind(temp)
+}
+p26 <- p0 + geom_polygon(aes(x, y, group = group, fill = group), edges)+ scale_fill_gradient(low = "white", high = "black")
+  geom_segment(aes(x, y, xend = xend, yend = yend), edges, lineend = "round")
+ggsave("plots/026-kmeans-regions.png", p26, width = 20, height = 20, units = "in")
