@@ -10,6 +10,7 @@ library(ggforce)
 library(ggalt)
 library(ggart)
 library(packcircles)
+library(polyclip)
 library(pts10000)
 library(reshape2)
 library(sp)
@@ -17,6 +18,7 @@ library(steiner)
 library(SyNet)
 library(tidyverse)
 library(TSP)
+library(tweenr)
 library(viridis)
 
 # Make reproducible
@@ -480,3 +482,41 @@ for(i in 1:max(result$centreID)) {
 p26 <- p0 + geom_polygon(aes(x, y, group = group, fill = group), edges, colour = "black")+ scale_fill_gradient(low = "white", high = "black")
   geom_segment(aes(x, y, xend = xend, yend = yend), edges, lineend = "round")
 ggsave("plots/026-kmeans-regions.png", p26, width = 20, height = 20, units = "in")
+
+# Interpolate ----
+get_quad <- function(pt) {
+  valid <- FALSE
+  while(!valid) {
+    df1 <- points %>%
+      mutate(dist = sqrt((x - pt$x[1])^2 + (y - pt$y[1])^2)) %>%
+      filter(dist < 1000) %>%
+      sample_n(4) %>%
+      select(x, y) %>%
+      chull_edges()
+    
+    if(nrow(df1) == 4) {
+      valid <- TRUE
+    }
+  }
+  
+  df2 <- data.frame(x = c(min(df1$x), min(df1$x), max(df1$x), max(df1$x)),
+                    y = c(max(df1$y), min(df1$y), min(df1$y), max(df1$y))) %>%
+    chull_edges()
+  
+  df <- list(df1, df2)
+  
+  tf <- tween_states(df, tweenlength = 1, statelength = 0,
+                     ease = "exponential-out", nframes = 1000)
+  
+  tf
+}
+
+result <- 1:100 %>%
+  map_df(~get_quad(points %>% sample_n(1)), .id = "id")
+
+p27 <- p0 +
+  geom_segment(aes(x, y, xend = xend, yend = yend, colour = .frame), result, alpha = 0.05,
+               size = 0.25, lineend = "round") +
+  scale_color_gradient(low = "black", high = "black")
+
+ggsave("plots/027-interpolate.png", p27, width = 20, height = 20, units = "in")
