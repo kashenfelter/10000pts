@@ -484,35 +484,43 @@ p26 <- p0 + geom_polygon(aes(x, y, group = group, fill = group), edges, colour =
 ggsave("plots/026-kmeans-regions.png", p26, width = 20, height = 20, units = "in")
 
 # Interpolate ----
-get_quad <- function(pt) {
+get_quad <- function(pt, vertices) {
   valid <- FALSE
   while(!valid) {
     df1 <- points %>%
       mutate(dist = sqrt((x - pt$x[1])^2 + (y - pt$y[1])^2)) %>%
-      filter(dist < 1000) %>%
-      sample_n(4) %>%
+      filter(dist < 1500) %>%
+      sample_n(vertices) %>%
       select(x, y) %>%
       chull_edges()
     
-    if(nrow(df1) == 4) {
+    if(nrow(df1) == vertices) {
       valid <- TRUE
     }
   }
   
-  df2 <- data.frame(x = c(min(df1$x), min(df1$x), max(df1$x), max(df1$x)),
-                    y = c(max(df1$y), min(df1$y), min(df1$y), max(df1$y))) %>%
+  eps <- 250
+  
+  df2 <- data.frame(x = c(min(df1$x) + runif(1, -eps, eps),
+                          min(df1$x) + runif(1, -eps, eps),
+                          max(df1$x) + runif(1, -eps, eps),
+                          max(df1$x) + runif(1, -eps, eps)),
+                    y = c(max(df1$y) + runif(1, -eps, eps),
+                          min(df1$y) + runif(1, -eps, eps),
+                          min(df1$y) + runif(1, -eps, eps),
+                          max(df1$y) + runif(1, -eps, eps))) %>%
     chull_edges()
   
   df <- list(df1, df2)
   
   tf <- tween_states(df, tweenlength = 1, statelength = 0,
-                     ease = "exponential-out", nframes = 1000)
+                     ease = "exponential-in", nframes = 1000)
   
   tf
 }
 
 result <- 1:100 %>%
-  map_df(~get_quad(points %>% sample_n(1)), .id = "id")
+  map_df(~get_quad(points %>% sample_n(1), 4), .id = "id")
 
 p27 <- p0 +
   geom_segment(aes(x, y, xend = xend, yend = yend, colour = .frame), result, alpha = 0.05,
@@ -520,3 +528,13 @@ p27 <- p0 +
   scale_color_gradient(low = "black", high = "black")
 
 ggsave("plots/027-interpolate.png", p27, width = 20, height = 20, units = "in")
+
+result <- 1:50 %>%
+  map_df(~get_quad(points %>% sample_n(1), 4), .id = "id")
+
+p28 <- p0 +
+  geom_segment(aes(x, y, xend = xend, yend = yend, colour = .frame), result, alpha = 0.05,
+               size = 0.25, lineend = "round") +
+  scale_color_gradient(low = "black", high = "black")
+
+ggsave("plots/028-interpolate.png", p28, width = 20, height = 20, units = "in")
