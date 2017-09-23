@@ -10,9 +10,9 @@ library(tidyverse)
 set.seed(10000)
 
 # Set parameters
-n <- 100000 # Number of iterations
+n <- 1000000 # Number of iterations
 X <- 10000 # Square canvas dimension
-delta <- 12.5
+delta <- 2
 
 # Create data frame
 points <- data.frame(x = numeric(n), y = numeric(n))
