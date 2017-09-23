@@ -52,11 +52,11 @@ while(i <= n) {
 
 # Create plot
 ggplot() +
-  geom_segment(aes(x, y, xend = xend, yend = yend), edges, lineend = "round", size = 0.3) +
+  geom_segment(aes(x, y, xend = xend, yend = yend), edges, lineend = "round", size = 0.3, colour = "white") +
   xlim(0, 10000) +
   ylim(0, 10000) +
   coord_equal() +
-  theme_blankcanvas(margin_cm = 0)
+  theme_blankcanvas(margin_cm = 0, bg_col = "black")
 
 # Save plot
-ggsave(paste("plots/rrt_delta", delta, ".png", sep = ""), width = 20, height = 20, units = "cm", dpi = 720)
+ggsave(paste("plots/rrt_delta_", delta, ".png", sep = ""), width = 20, height = 20, units = "cm", dpi = 720)
