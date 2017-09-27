@@ -59,4 +59,4 @@ ggplot() +
   theme_blankcanvas(margin_cm = 0, bg_col = "white")
 
 # Save plot
-ggsave(paste("plots/rrt_delta__", delta, ".png", sep = ""), width = 20, height = 20, units = "cm", dpi = 720)
+ggsave(paste("rrt_delta_", delta, ".png", sep = ""), width = 20, height = 20, units = "cm", dpi = 300)
