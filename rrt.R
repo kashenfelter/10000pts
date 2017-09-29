@@ -2,9 +2,11 @@
 # https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree
 
 # Load packages
+library(gganimate)
 library(ggart)
 library(steiner)
 library(tidyverse)
+library(viridis)
 
 # Make reproducible
 set.seed(10000)
@@ -50,13 +52,24 @@ while(i <= n) {
   print(i)
 }
 
+edges2 <- edges[1:50000, ] %>% mutate(id = 1:nrow(.), frame = floor(id / (50000 / 100)))
+
 # Create plot
-ggplot() +
-  geom_segment(aes(x, y, xend = xend, yend = yend), edges, lineend = "round", size = 0.3, colour = "black") +
+p <- ggplot(mapping = aes(frame = frame, cumulative = FALSE)) +
+  geom_segment(aes(x, y, xend = xend, yend = yend),
+             edges2, lineend = "round", size = 2.5, colour = "white") +
   #xlim(0, 10000) +
   #ylim(0, 10000) +
   coord_equal() +
-  theme_blankcanvas(margin_cm = 0, bg_col = "white")
+  theme_blankcanvas(margin_cm = 0, bg_col = "black")
+  #theme_void() + theme(legend.position = "none")
 
 # Save plot
-ggsave(paste("rrt_delta_", delta, ".png", sep = ""), width = 20, height = 20, units = "cm", dpi = 300)
+#ggsave(paste("rrt_delta___", delta, ".png", sep = ""), p, width = 20, height = 20, units = "cm", dpi = 300)
+ggsave("rrt001.png", p, width = 20, height = 20, units = "cm", dpi = 300)
+
+
+animation::ani.options(interval = 1/30)
+
+gganimate(p, "rrt001.gif", title_frame = FALSE, ani.width = 750, 
+           ani.height = 750)
