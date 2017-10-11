@@ -57,11 +57,11 @@ edges2 <- edges[1:50000, ] %>% mutate(id = 1:nrow(.), frame = floor(id / (50000 
 # Create plot
 p <- ggplot(mapping = aes(frame = frame, cumulative = FALSE)) +
   geom_segment(aes(x, y, xend = xend, yend = yend),
-             edges2, lineend = "round", size = 2.5, colour = "white") +
+             edges2, lineend = "round", size = 2.5) +
   #xlim(0, 10000) +
   #ylim(0, 10000) +
   coord_equal() +
-  theme_blankcanvas(margin_cm = 0, bg_col = "black")
+  theme_blankcanvas(margin_cm = 0)
   #theme_void() + theme(legend.position = "none")
 
 # Save plot
