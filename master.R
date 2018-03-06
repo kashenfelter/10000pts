@@ -10,6 +10,7 @@ library(ggforce)
 library(ggalt)
 library(ggart)
 library(packcircles)
+library(patchwork)
 library(polyclip)
 library(pts10000)
 library(reshape2)
@@ -26,27 +27,38 @@ set.seed(10000)
 
 # Points ----
 points <- pts10000::points
+
+# Lattice
+points0 <- expand.grid(x = seq(1, 10000, 100), y = seq(1, 10000, 100))
+
 p <- ggplot() +
-  geom_point(aes(x, y), points, size = 1) +
+  geom_point(aes(x, y), points, size = 1.25) +
   coord_equal() +
   xlim(0, 10000) +
   ylim(0, 10000) +
   theme_blankcanvas(margin_cm = 0)
 
 p0 <- ggplot() +
-  #geom_point(aes(x, y), points, size = 1) +
+  geom_point(aes(x, y), points0, size = 1.25) +
   coord_equal() +
   xlim(0, 10000) +
   ylim(0, 10000) +
   theme_blankcanvas(margin_cm = 0)
 
-ggsave("plots/001-points.png", p, width = 20, height = 20, units = "in")
+ggsave("plots/001-points0.png", p0, width = 20, height = 20, units = "in")
 
 # Delaunay ----
 result <- deldir(points)
 delaunay <- result$delsgs
-p2 <- p + geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2), delaunay, lineend = "round")
-ggsave("plots/002-delaunay.png", p2, width = 20, height = 20, units = "in")
+p2 <- ggplot() +
+  #geom_point(aes(x, y), points, size = 0.25) +
+  geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2), delaunay, lineend = "round",
+                 size = 0.5) +
+  coord_equal() +
+  xlim(0, 10000) +
+  ylim(0, 10000) +
+  theme_void()
+ggsave("plots/002-delaunay-2.png", p2, width = 24, height = 24, units = "cm", dpi = 600)
 
 # Voronoi ----
 result <- deldir(points)
